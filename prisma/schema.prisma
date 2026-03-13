@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  company       String?
+  role          String    @default("brand")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  campaigns     Campaign[]
+}
+
+model Influencer {
+  id              String    @id @default(cuid())
+  name            String
+  email           String?
+  bio             String?
+  avatar          String?
+  niche           String
+  location        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  platforms       Platform[]
+  campaignLinks   CampaignInfluencer[]
+}
+
+model Platform {
+  id              String    @id @default(cuid())
+  type            String
+  username        String
+  profileUrl      String?
+  followers       Int       @default(0)
+  engagementRate  Float     @default(0)
+  avgLikes        Int       @default(0)
+  avgComments     Int       @default(0)
+  avgViews        Int       @default(0)
+  influencerId    String
+  influencer      Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([type, username])
+}
+
+model Campaign {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  status          String    @default("draft")
+  platform        String
+  budget          Float     @default(0)
+  spent           Float     @default(0)
+  startDate       DateTime?
+  endDate         DateTime?
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  influencers     CampaignInfluencer[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model CampaignInfluencer {
+  id              String    @id @default(cuid())
+  status          String    @default("invited")
+  fee             Float     @default(0)
+  deliverables    String?
+  notes           String?
+  campaignId      String
+  campaign        Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencerId    String
+  influencer      Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  metrics         Metric[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([campaignId, influencerId])
+}
+
+model Metric {
+  id                    String    @id @default(cuid())
+  impressions           Int       @default(0)
+  reach                 Int       @default(0)
+  likes                 Int       @default(0)
+  comments              Int       @default(0)
+  shares                Int       @default(0)
+  clicks                Int       @default(0)
+  conversions           Int       @default(0)
+  revenue               Float     @default(0)
+  recordedAt            DateTime  @default(now())
+  campaignInfluencerId  String
+  campaignInfluencer    CampaignInfluencer @relation(fields: [campaignInfluencerId], references: [id], onDelete: Cascade)
+}
